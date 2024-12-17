@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #f8cdda, #1c92d2);
+            color: #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            width: 60%;
+            max-width: 800px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            text-align: center;
+        }
+        #header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #ccc;
+        }
+        #logo {
+            width: 50px;
+            margin-right: 20px;
+        }
+        #chatbox {
+            width: 100%;
+            height: 500px;
+            border-bottom: 1px solid #ccc;
+            padding: 20px;
+            overflow-y: scroll;
+            background: #f1f1f1;
+        }
+        #userInput {
+            width: calc(100% - 60px);
+            padding: 15px;
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 0;
+            outline: none;
+            font-size: 16px;
+        }
+        #send {
+            width: 50px;
+            padding: 15px;
+            border: none;
+            background: #1c92d2;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            outline: none;
+        }
+        #send:hover {
+            background: #155a8a;
+        }
+        .user, .bot {
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 20px;
+            width: fit-content;
+            max-width: 70%;
+            clear: both;
+            display: inline-block;
+            animation: fadeIn 0.5s;
+        }
+        .user {
+            background: #1c92d2;
+            color: white;
+            float: right;
+        }
+        .bot {
+            background: #f8cdda;
+            color: black;
+            float: left;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .typing {
+            display: flex;
+            align-items: center;
+        }
+        .typing .dot {
+            height: 10px;
+            width: 10px;
+            background-color: #1c92d2;
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1s infinite;
+            margin: 0 2px;
+        }
+        .typing .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes blink {
+            0%, 80%, 100% {
+                opacity: 0;
+            }
+            40% {
+                opacity: 1;
+            }
+        }
+        h1 {
+            font-size: xx-large;
+            color: #885ecc;
+            position: relative;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="header">
+            <h1>CHATBOT</h1>
+            <img id="logo" src="{{ url_for('static', filename='logo.jpg') }}" alt="Chatbot Logo">
+        </div>
+        <div id="chatbox"></div>
+        <div style="display: flex; border-top: 1px solid #ccc;">
+            <input id="userInput" type="text" placeholder="Type a message...">
+            <button id="send">&#9650;</button> <!-- Up arrow symbol -->
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("send").addEventListener("click", function() {
+            let userInput = document.getElementById("userInput").value;
+            if (userInput) {
+                let userHtml = '<div class="user">' + userInput + '</div>';
+                document.getElementById("chatbox").innerHTML += userHtml;
+                document.getElementById("userInput").value = '';
+
+                console.log("User input: " + userInput);
+                showTypingAnimation();
+
+                // Simulate a delay for the bot's response
+                setTimeout(() => {
+                    fetch('/get', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: 'msg=' + encodeURIComponent(userInput)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Bot response: " + data.response);
+                        removeTypingAnimation();
+                        let botHtml = '<div class="bot">' + data.response + '</div>';
+                        document.getElementById("chatbox").innerHTML += botHtml;
+                        document.getElementById("chatbox").scrollTop = document.getElementById("chatbox").scrollHeight;
+                    });
+                }, 400); // Simulated delay of 2 seconds
+            }
+        });
+
+        document.getElementById("userInput").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                document.getElementById("send").click();
+            }
+        });
+
+        function showTypingAnimation() {
+            console.log("Showing typing animation");
+            let typingHtml = `
+                <div class="bot typing" id="typing">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>`;
+            document.getElementById("chatbox").innerHTML += typingHtml;
+            document.getElementById("chatbox").scrollTop = document.getElementById("chatbox").scrollHeight;
+        }
+
+        function removeTypingAnimation() {
+            console.log("Removing typing animation");
+            let typingElement = document.getElementById("typing");
+            if (typingElement) {
+                typingElement.parentNode.removeChild(typingElement);
+            }
+        }
+    </script>
+</body>
+</html>
